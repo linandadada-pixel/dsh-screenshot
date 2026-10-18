@@ -11,6 +11,9 @@ DeepSeek Harness 输入框截屏按钮：**不调用 Windows 的 `ms-screenclip:
 
 选区外的画面压暗成灰色，选区本身保持原亮度；边框、手柄、尺寸标签和确认键都是微信同款绿色。
 
+相机左边还有一个小眼睛：**亮起时，点相机会先把整个 DSH 会话窗口藏起来**，只截桌面和其他应用；
+再点一下眼睛恢复显示，截图完成/取消后 DSH 窗口也会自动回来。
+
 **GitHub**：<https://github.com/linandadada-pixel/dsh-screenshot>  
 **下载**：在 GitHub Releases 下载 `dsh-screenshot-<version>.tgz`，或直接
 `dsh plugin --profile web add github:linandadada-pixel/dsh-screenshot`。
@@ -85,11 +88,13 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 
 ## 使用
 
+0. 想连 DSH 窗口一起截就先不用管；不想截它，点相机左边的**眼睛**让图标变绿，
+   点相机会先隐藏整个 DSH 会话窗口，截完/取消后自动恢复；
 1. 点输入框右侧（模型选择器和发送之间）的相机图标；
 2. 全屏冻结后拖出选区；松手后可以拖选区移动、拖 8 个手柄缩放；
 3. 按 `Enter` 或点 ✓ 确认；按 `Esc`、右键或点 ✕ 取消。
 
-截图会作为图片附件进入草稿，补一句话再发送即可。
+截图会作为图片附件进入草稿，补一句话再发送即可。眼睛的开关状态会记住，下次打开还是上次的选择。
 
 ## 开发
 
@@ -153,6 +158,8 @@ dsh-screenshot/
 
 ## 更新日志
 
+- **2.3.0** — 相机左侧新增「隐藏 DSH 窗口」开关：开启后截屏前先隐藏整个 DSH
+  会话窗口，确认/取消后自动恢复；强杀 helper 时宿主会补一次 `--restore`。
 - **2.2.0** — 拖动选区不再卡顿：改成「静态全屏压暗层 + 选区大小动态层」，
   只重绘选区附近并跳过重复 mousemove，实测约 10 ms/帧。
 - **2.1.0** — 选区外灰色遮罩、微信绿边框/手柄/尺寸标签；压暗图用逐像素计算，

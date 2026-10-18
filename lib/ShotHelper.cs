@@ -759,6 +759,124 @@ internal sealed class OverlayForm : Form
     }
 }
 
+internal static class DshHider
+{
+    private delegate bool EnumProc(IntPtr hWnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int command);
+
+    [DllImport("user32.dll")]
+    private static extern int GetWindowTextLength(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern int GetWindowLong(IntPtr hWnd, int index);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    private const int SW_HIDE = 0;
+    private const int SW_SHOW = 5;
+    private const int GWL_EXSTYLE = -20;
+    private const int WS_EX_TOOLWINDOW = 0x80;
+
+    private static readonly System.Collections.Generic.List<IntPtr> Hidden = new System.Collections.Generic.List<IntPtr>();
+
+    private static System.Collections.Generic.HashSet<uint> AppPids()
+    {
+        System.Collections.Generic.HashSet<uint> pids = new System.Collections.Generic.HashSet<uint>();
+        foreach (Process process in Process.GetProcessesByName("DeepSeek Harness")) pids.Add((uint)process.Id);
+        return pids;
+    }
+
+    private static bool IsAppWindow(IntPtr hWnd)
+    {
+        if (!IsWindowVisible(hWnd)) return false;
+        if (GetWindowTextLength(hWnd) == 0) return false;
+        int style = GetWindowLong(hWnd, GWL_EXSTYLE);
+        return (style & WS_EX_TOOLWINDOW) == 0;
+    }
+
+    internal static void Hide()
+    {
+        Hidden.Clear();
+        System.Collections.Generic.HashSet<uint> pids = AppPids();
+        Diag.Write("hide-dsh: pids=" + pids.Count);
+        if (pids.Count == 0)
+        {
+            Diag.Write("hide-dsh: no DeepSeek Harness process");
+            return;
+        }
+
+        EnumWindows(delegate(IntPtr hWnd, IntPtr lParam)
+        {
+            uint pid;
+            GetWindowThreadProcessId(hWnd, out pid);
+            if (pids.Contains(pid))
+            {
+                int length = GetWindowTextLength(hWnd);
+                int style = GetWindowLong(hWnd, GWL_EXSTYLE);
+                bool visible = IsWindowVisible(hWnd);
+                Diag.Write("hide-dsh candidate pid=" + pid + " len=" + length + " visible=" + visible + " style=" + style);
+                if (visible && length > 0 && (style & WS_EX_TOOLWINDOW) == 0)
+                {
+                    ShowWindow(hWnd, SW_HIDE);
+                    Hidden.Add(hWnd);
+                }
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        Diag.Write("hide-dsh: " + Hidden.Count + " window(s)");
+        System.Threading.Thread.Sleep(220);
+    }
+
+    internal static void Restore()
+    {
+        foreach (IntPtr hWnd in Hidden)
+        {
+            ShowWindow(hWnd, SW_SHOW);
+        }
+        if (Hidden.Count > 0) SetForegroundWindow(Hidden[0]);
+        Diag.Write("restore-dsh: " + Hidden.Count + " window(s)");
+        Hidden.Clear();
+    }
+
+    /** Recovery entry: show every titled DeepSeek Harness window, even if the helper was force-killed. */
+    internal static void RestoreAll()
+    {
+        System.Collections.Generic.HashSet<uint> pids = AppPids();
+        if (pids.Count == 0) return;
+        IntPtr first = IntPtr.Zero;
+        EnumWindows(delegate(IntPtr hWnd, IntPtr lParam)
+        {
+            uint pid;
+            GetWindowThreadProcessId(hWnd, out pid);
+            if (pids.Contains(pid) && GetWindowTextLength(hWnd) > 0)
+            {
+                int style = GetWindowLong(hWnd, GWL_EXSTYLE);
+                if ((style & WS_EX_TOOLWINDOW) == 0)
+                {
+                    ShowWindow(hWnd, SW_SHOW);
+                    if (first == IntPtr.Zero) first = hWnd;
+                }
+            }
+            return true;
+        }, IntPtr.Zero);
+        if (first != IntPtr.Zero) SetForegroundWindow(first);
+        Diag.Write("restore-all");
+    }
+}
+
 internal static class Program
 {
     [STAThread]
@@ -774,17 +892,29 @@ internal static class Program
         }
 
         string outPath = null;
-        for (int i = 0; i < args.Length - 1; i++)
+        bool hideDsh = false;
+        bool restoreOnly = false;
+        for (int i = 0; i < args.Length; i++)
         {
-            if (string.Equals(args[i], "--out", StringComparison.OrdinalIgnoreCase)) outPath = args[i + 1];
-            if (string.Equals(args[i], "--log", StringComparison.OrdinalIgnoreCase)) Diag.LogPath = args[i + 1];
+            if (string.Equals(args[i], "--out", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length) outPath = args[++i];
+            else if (string.Equals(args[i], "--log", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length) Diag.LogPath = args[++i];
+            else if (string.Equals(args[i], "--hide-dsh", StringComparison.OrdinalIgnoreCase)) hideDsh = true;
+            else if (string.Equals(args[i], "--restore", StringComparison.OrdinalIgnoreCase)) restoreOnly = true;
+        }
+
+        if (restoreOnly)
+        {
+            DshHider.RestoreAll();
+            return 0;
         }
         if (string.IsNullOrEmpty(outPath)) return 3;
-        Diag.Write("main start out=" + outPath);
+        Diag.Write("main start out=" + outPath + " hideDsh=" + hideDsh);
 
         try
         {
             Application.EnableVisualStyles();
+            if (hideDsh) DshHider.Hide();
+
             Rectangle bounds = SystemInformation.VirtualScreen;
             Bitmap screen = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format24bppRgb);
             using (Graphics g = Graphics.FromImage(screen))
@@ -804,6 +934,10 @@ internal static class Program
         {
             Diag.Write("error " + error);
             return 3;
+        }
+        finally
+        {
+            if (hideDsh) DshHider.Restore();
         }
     }
 }
