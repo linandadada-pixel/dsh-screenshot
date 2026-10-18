@@ -1,0 +1,11 @@
+# dsh-screenshot — DSH bundle patch
+#
+# 把截屏插件的 Host 半侧挂进当前 profile 的配置树。
+# 浏览器半侧由 package.json 的 dsh.client 声明，宿主会按 dsh.client 自动组装
+# /plugins 下的 bundle，这里不需要再写一条 client 条目。
+#
+# 安装（推荐）：把本目录放进 profile 的 node_modules，再在 profile 的
+# cordis.patch.yml 里加入同一条 insert；DSH 的 HMR 会热加载，无需重启。
+- insert:
+    - id: dsh-screenshot
+      name: dsh-screenshot

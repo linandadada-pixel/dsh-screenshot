@@ -1,0 +1,57 @@
+{
+  "name": "dsh-screenshot",
+  "version": "2.2.0",
+  "description": "DSH 输入框截屏按钮：自带原生截图小工具，点击即冻结全屏、拖选、回车插入当前会话；与语音输入并排共存，不依赖 Windows 截图浮层。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/ShotHelper.cs",
+    "cordis.patch.yml",
+    "install.ps1",
+    "uninstall.ps1",
+    "README.md",
+    "LICENSE",
+    "icon.svg",
+    "docs"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "screenshot",
+    "snip",
+    "capture",
+    "windows"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "deepseek好孩子",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linandadada-pixel/dsh-screenshot.git"
+  },
+  "homepage": "https://github.com/linandadada-pixel/dsh-screenshot",
+  "bugs": {
+    "url": "https://github.com/linandadada-pixel/dsh-screenshot/issues"
+  }
+}

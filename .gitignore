@@ -1,0 +1,5 @@
+lib/dsh-shot-helper.exe
+lib/*.tmp.exe
+node_modules/
+dist/
+*.log
