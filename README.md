@@ -136,7 +136,8 @@ dsh-screenshot/
 
   桌面端在「插件」页用 GitHub 源安装，或下载 tgz 后用内置 `plugin_manager` 安装。
 - **插件市场**：已向 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)
-  提交收录条目；合并后 DSH 插件市场会自动出现（通常一天内）。
+  提交收录 PR [#7888](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7888)；
+  合并后 DSH 插件市场会自动出现（通常一天内）。
 - **npm**：发布到 npm 需要 npm 账号。仓库带 `.github/workflows/publish.yml`，
   在 GitHub Secrets 配置 `NPM_TOKEN` 后发布 Release 即自动 `npm publish`；之后也可以
   `dsh plugin --profile web add dsh-screenshot`。
