@@ -47,17 +47,19 @@ helper 是 `lib/ShotHelper.cs` 编译出的 `lib/dsh-shot-helper.exe`（约 20 K
 
 ## 安装
 
-### 插件市场 / `dsh plugin`
+### 插件市场 / 插件页
+
+市场收录合并后，在 DSH 的「插件」页面搜索 `dsh-screenshot` 即可安装（插件商店装的是标准
+DSH bundle，`package.json` 里的 `dsh.bundle.patch` 会插入 Host 路由和客户端 UI）。
+
+也可以直接从 GitHub 源安装：
 
 ```powershell
-dsh plugin --profile desktop add dsh-screenshot
+dsh plugin --profile web add github:linandadada-pixel/dsh-screenshot
 ```
 
-或在「插件」页面搜索安装。插件商店装的是标准 DSH bundle（`package.json` 里的
-`dsh.bundle.patch` 会插入 Host 路由和客户端 UI）。
-
-> 桌面端的 `dsh plugin` CLI 按设计拒绝 `--profile desktop`，请用桌面端「插件」页或
-> `plugin_manager`；上面的命令适用于 `dsh web` 的 web profile。
+> 桌面端的 `dsh plugin` CLI 按设计拒绝 `--profile desktop`；桌面端请用「插件」页，
+> 或下载 Release 里的 tgz 后用内置 `plugin_manager` 安装。
 
 ### 本地安装（本仓库）
 
